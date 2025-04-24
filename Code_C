@@ -1,0 +1,467 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define nmax 10000
+#include <time.h>
+#include <string.h>
+
+typedef struct{
+   int jour,mois,annee;
+}datnaise;
+typedef struct produit_client {
+    char  matricule[10] ;
+    char  libelle[50];
+    char  categorie[50];
+    int num;
+      datnaise date;
+    float avance,reste,pu;
+}produit_client;
+
+produit_client achats[nmax];
+int nbrAchats = 0;
+
+typedef struct client
+{
+    char matricule[20];
+    char nom[100];
+    char prenom[50];
+    char adress[200];
+    char email[50];
+    int tel;
+} Client;
+
+typedef struct Product {
+    char category[51];
+    char name[51];
+    float price;
+    int stock;
+}Product;
+
+Product stock[nmax];
+int numProducts = 0;
+
+Client c[nmax];
+ produit_client;
+int nbrClients = 0;
+
+/**
+* Rechercher un Client
+*/
+int rechercherClient(char matriculeCLient[20]){
+    int i = 0;
+    while(i < nbrClients && strcmp(c[i].matricule, matriculeCLient) != 0){
+        i++;
+    }
+    if(i < nbrClients){
+        return i;
+    }else
+        return -1;
+}
+
+/**
+* Rechercher un produit
+* renvoie l'indice du produit dans le tableau, -1 si �a n'�xiste pas
+*/
+int rechercherProduit(char libelleProduit[50]){
+    int i = 0;
+    while(i < numProducts && strcmp(stock[i].name, libelleProduit) != 0){
+        i++;
+    }
+    if(i < numProducts){
+        return i;
+    }else
+        return -1;
+}
+
+/**
+* Rechercher un produit_client
+*/
+int rechercherProduitClient(char matriculeCLient[20], char libelleProduit[50]){
+    int i = 0;
+
+    while(i < nbrAchats && strcmp(achats[i].matricule, matriculeCLient) != 0 && strcmp(achats[i].libelle, libelleProduit) != 0){
+        i++;
+    }
+    if(i < nbrAchats){
+        return i;
+    }else
+        return -1;
+}
+
+void modifierProduitClient(int indiceAchat, float nouvelAvance){
+    achats[indiceAchat].avance += nouvelAvance;
+    achats[indiceAchat].reste -= nouvelAvance;
+    // new date !!
+}
+
+void ajoutProduitClient(int indiceClient, int indiceProduit, float avance){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    produit_client nouvelAchat;
+
+    strcpy(nouvelAchat.matricule, c[indiceClient].matricule);
+    strcpy(nouvelAchat.libelle, stock[indiceProduit].name);
+    nouvelAchat.pu = stock[indiceProduit].price;
+    strcpy(nouvelAchat.categorie, stock[indiceProduit].category);
+    nouvelAchat.avance = avance;
+    nouvelAchat.reste = stock[indiceProduit].price - avance;
+    //Date
+    nouvelAchat.date.jour = tm.tm_mday;
+    nouvelAchat.date.mois = tm.tm_mon + 1;
+    nouvelAchat.date.annee = tm.tm_year + 1900;
+
+    achats[nbrAchats] = nouvelAchat;
+    printf("HERE !");
+    nbrAchats++;
+}
+
+/**
+* Acheter un produit
+*/
+int acheterProduit(){
+
+    char matriculeCLient[20], libelleProduit[50];
+    float avance;
+    int indiceClient, indiceProduit, indiceAchat;
+    printf("***acheter produit***\n");
+    printf("Veuillez saisir le matricule du client: ");
+    scanf("%s", &matriculeCLient);
+    indiceClient = rechercherClient(matriculeCLient);
+    if(indiceClient == -1){
+        printf("Le client n'�xiste pas!");
+        sleep(3);
+        return 0;
+    }
+
+    printf("Veuillez saisir le libell� du produit � acheter: ");
+    scanf("%s", &libelleProduit);
+    indiceProduit = rechercherProduit(libelleProduit);
+    if(indiceProduit == -1){
+        printf("Le produit n'�xiste pas!");
+        sleep(3);
+        return 0;
+        printf("le reste :");
+    }
+
+    // Tout est OK, le client �xiste ainsi que le produit
+    printf("Veuillez saisir l'avance: ");
+    scanf("%f", &avance);
+    // Le client a d�j� achet� le produit, donc il faut modifier l'avance/le reste
+    indiceAchat = rechercherProduitClient(matriculeCLient, libelleProduit);
+    if(rechercherProduitClient(matriculeCLient, libelleProduit) != -1)
+        modifierProduitClient(indiceAchat, avance);
+    else{// Le client ach�te un produit pour la premi�re fois, donc il faut ajouter dans produit_client
+            printf("Achat fait pour la premi�re fois ####");
+            ajoutProduitClient(indiceClient, indiceProduit, avance);
+
+    }
+
+}
+
+/**
+*ajouter un produit
+*/
+void addProduct() {
+    Product newProduct;
+        printf("***ajouter produit***\n");
+    if (numProducts >= nmax) {
+        printf("Le stock est plein. Impossible d'ajouter un nouveau produit.\n");
+        return;
+    }
+
+    printf("Categorie : ");
+    scanf("%50s", newProduct.category);
+    printf("Nom : ");
+    scanf("%50s", newProduct.name);
+    printf("Prix unitaire : ");
+    scanf("%f", &newProduct.price);
+    printf("Stock : ");
+    scanf("%d", &newProduct.stock);
+
+    stock[numProducts] = newProduct;
+    numProducts++;
+
+    printf("Produit ajout� avec succ�s.\n");
+}
+/**
+*afficher le stock
+*/
+void displayStock() {
+    int i;
+     printf("***afficher stock***\n");
+    if (numProducts == 0) {
+        printf("Le stock est vide.\n");
+        return;
+    }
+    printf("Stock actuel :\n");
+    printf("-----------------------------\n");
+    printf("Cat�gorie\tNom\t\tPrix\tStock\n");
+    printf("-----------------------------\n");
+
+    for (i = 0; i < numProducts; i++) {
+        printf("%s\t\t%s\t\t%.2f\t%d\n", stock[i].category, stock[i].name, stock[i].price, stock[i].stock);
+    }
+    sleep(5);
+    printf("-----------------------------\n");
+}
+/**
+*afficher l'achat
+*/
+void displayAchats() {
+    int i;
+    printf("***afficher l'achat***\n");
+    printf("###### nbrAchats: %d\n", nbrAchats);
+    if (nbrAchats == 0) {
+        printf("Aucun achat n�est effectu�.\n");
+        return;
+    }
+
+    printf("-----------------------------\n");
+    printf("Matricule\tPU\t\tReste\tAvance\t\tDate\n");
+    printf("-----------------------------\n");
+
+    for (i = 0; i < nbrAchats; i++) {
+        printf("%s\t\t%f\t%.2f\t%f\t%d-%d-%d\n", achats[i].matricule, achats[i].pu, achats[i].reste, achats[i].avance, achats[i].date.jour, achats[i].date.mois, achats[i].date.annee);
+    }
+    sleep(5);
+    printf("-----------------------------\n");
+}
+
+/**
+*modifier le stock
+*/
+void updateStock() {
+    char productName[51];
+    int found = 0;
+    int newStock, i;
+     printf("***modifier stock***\n");
+
+    if (numProducts == 0) {
+        printf("Le stock est vide. Ajoutez des produits avant de mettre � jour le stock.\n");
+        return;
+    }
+
+    printf("Nom du produit : ");
+    scanf("%50s", productName);
+
+    for (i = 0; i < numProducts; i++) {
+        if (strcmp(productName, stock[i].name) == 0) {
+            printf("Nouveau stock : ");
+            scanf("%d", &newStock);
+
+            stock[i].stock = newStock;
+            found = 1;
+            break;
+        }
+    }
+
+    if (found) {
+        printf("Stock mis � jour avec succ�s.\n");
+    } else {
+        printf("Produit non trouv�.\n");
+    }
+}
+
+/**
+*menu du client
+*/
+
+int menuClient(){
+    int choix;
+    clrscr();
+    printf("**menu**\n");
+    printf("1: Ajouter un client\n");
+    printf("2: Modifier un client\n");
+    printf("3: Supprimer un client\n");
+    printf("4: Afficher tous les clients\n");
+    printf("5: Ajouter un produit \n");
+    printf("6: Modifier un produit \n");
+    printf("7: afficher un produit\n");
+    printf("8: Acheter un produit\n");
+    printf("9: afficher l'achat\n");
+    printf("-1: Pour quitter\n");
+    printf("Entrer votre choix:\n");
+    scanf("%d", &choix);
+    return choix;
+}
+/**
+* Ajouter un nouveau client
+*/
+void ajouterClient(){
+
+    Client nouveauClient;
+    printf("***ajouter client***\n");
+    printf("taper le matricule: ");
+    scanf("%s",&(nouveauClient.matricule));
+    printf("taper nom: ");
+    scanf("%s",&(nouveauClient.nom));
+    printf("taper prenom: ");
+    scanf("%s",&(nouveauClient.prenom));
+    printf("taper adress: ");
+    scanf("%s",&(nouveauClient.adress));
+    printf("taper email: ");
+    scanf("%s",&(nouveauClient.email));
+    printf("taper tel: ");
+    scanf("%d",&(nouveauClient.tel));
+
+    // Ajouter le nouveauClient dans le tableau c
+    c[nbrClients] = nouveauClient;
+    nbrClients++;
+}
+
+/**
+* Modifier un produit/client
+*/
+void modifierClient(char matricule[20]){
+    int i, j;
+    printf("***modifier client***\n");
+    printf("nbrClients: %d\n", nbrClients);
+    printf("matricule: %s", matricule);
+    for(i = 0; i < nbrClients, strcmp(c[i].matricule, matricule) != 0; i++){
+
+    }
+    if(i < nbrClients){
+        printf("taper le nouveau matricule: ");
+        scanf("%s",&(c[i].matricule));
+        printf("taper le nouveau nom: ");
+        scanf("%s",&(c[i].nom));
+        printf("taper le nouveau prenom: ");
+        scanf("%s",&(c[i].prenom));
+        printf("taper la nouvelle adress: ");
+        scanf("%s",&(c[i].adress));
+        printf("taper le nouveau email: ");
+        scanf("%s",&(c[i].email));
+        printf("taper le nouveau tel: ");
+        scanf("%d",&(c[i].tel));
+    }else
+        printf("Aucune �l�ment n'est trouv�");
+}
+
+/**
+* Supprimer un client
+*/
+void supprimerClient(char matricule[20]){
+    int i, j;
+    printf("***suprimer client***\n");
+    printf("nbrClients: %d\n", nbrClients);
+    printf("matricule: %s", matricule);
+    for(i = 0; i < nbrClients, strcmp(c[i].matricule, matricule) != 0; i++){
+
+    }
+    if(i < nbrClients){ // Client trouv�
+        while(i < nbrClients){
+            c[i] = c[i + 1];
+            i++;
+        }
+        nbrClients--;
+    }
+    else
+        printf("Aucune �l�ment n'est trouv�");
+}
+
+/**
+*affichage du client
+*/
+void afficherClients(){
+    int i = 0;
+
+    clrscr();
+    while(i < nbrClients){
+        printf("***affichage client***\n");
+        printf("_______\n");
+        printf("le client: %d\n", i+1);
+        printf("le matricule est : %s\n", (c[i].matricule));
+        printf("le nom est : %s\n", (c[i].nom));
+        printf("le prenom est : %s\n", (c[i].prenom));
+        printf("l'email est : %s\n", (c[i].email));
+        printf("l'adress est : %s\n", (c[i].adress));
+        printf("le telephone est : %d\n", (c[i].tel));
+        i++;
+        sleep(5);
+    }
+}
+void main()
+{
+    int choix = 0;
+    char matricule[20];
+
+    while(choix != -1){
+        switch (choix) {
+            case 0: {
+                choix = menuClient();
+                break;
+            }
+            case 1: {
+                ajouterClient();
+                choix = 0;
+                break;
+            }
+            case 2: {
+                printf("Merci de pr�ciser le matricule du client � modifier:\n");
+                scanf("%s", &matricule);
+                modifierClient(matricule);
+                choix = 0;
+                break;
+            }
+            case 3: {
+                printf("Merci de pr�ciser le matricule du client � supprimer:\n");
+                scanf("%s", &matricule);
+                supprimerClient(matricule);
+                choix = 0;
+                break;
+            }
+            case 4: {
+                if(nbrClients > 0)
+                    afficherClients();
+                else{
+                    clrscr();
+                    printf("Il n'�xiste aucun client!");
+                    sleep(2);
+                }
+                choix = 0;
+                break;
+            }
+             case 5: {
+                  clrscr();
+                 addProduct();
+                 choix=0;
+                 break;
+             }
+             case 6:{
+                 clrscr();
+                 updateStock();
+                 choix=0;
+                 break;
+             }
+             case 7: {
+                clrscr();
+                if(numProducts > 0)
+                    displayStock();
+                else{
+                    clrscr();
+                    printf("Il n'�xiste aucun client!");
+                    sleep(2);
+                }
+                choix = 0;
+                break;
+            }
+            case 8: {
+                clrscr();
+                acheterProduit();
+                choix = 0;
+                break;
+            case 9 : {
+                clrscr();
+                displayAchats();
+                choix=0;
+            }
+            }
+            default:
+                clrscr();
+                printf("***hors choix***\n");
+                printf("Merci d'entrer un choix valide\n");
+                sleep(2);
+                choix = 0;
+        }
+    }
+}
